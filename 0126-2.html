@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特效文字產生器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 針對長輩優化的額外樣式 */
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      background-color: #f3f4f6;
+    }
+    
+    /* 加大滑桿的操作區域 */
+    input[type=range] {
+      height: 30px; 
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 28px;
+      width: 28px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      margin-top: -10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      cursor: pointer;
+      background: #d1d5db;
+      border-radius: 4px;
+    }
+    
+    /* 加大顏色選擇器 */
+    input[type="color"] {
+      height: 50px;
+      width: 100%;
+      padding: 2px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* 畫布背景，顯示透明度 */
+    .canvas-container {
+      background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+                        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+                        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: white;
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+
+  <!-- 標題區 -->
+  <header class="bg-blue-600 text-white p-6 text-center shadow-lg">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-wide">✨ 特效文字產生器 ✨</h1>
+    <p class="text-lg mt-2 opacity-90">簡單好用，輕鬆製作漂亮的長輩圖文字</p>
+  </header>
+
+  <div class="container mx-auto p-4 max-w-6xl">
+    
+    <!-- 主要佈局：電腦版左右分欄，手機版上下堆疊 -->
+    <div class="flex flex-col lg:flex-row gap-8">
+      
+      <!-- 左側：控制面板 -->
+      <div class="w-full lg:w-1/2 space-y-6">
+        
+        <!-- 卡片 1: 文字輸入 -->
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+          <h2 class="text-xl font-bold mb-4 text-blue-700 border-b pb-2 flex items-center">
+            <span class="text-2xl mr-2">1️⃣</span> 輸入文字
+          </h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-lg font-medium mb-2">請輸入想要顯示的文字：</label>
+              <textarea id="textInput" rows="3" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition" placeholder="例如：早安你好\n平安喜樂" oninput="generateLogo()">早安你好&#10;平安喜樂</textarea>
+            </div>
+            
+            <div>
+              <label class="block text-lg font-medium mb-2">選擇電腦裡的字型 (選填)：</label>
+              <input type="file" id="fontUpload" accept=".ttf,.otf" class="block w-full text-lg text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-lg file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer">
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 2: 顏色設定 -->
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+          <h2 class="text-xl font-bold mb-4 text-orange-600 border-b pb-2 flex items-center">
+            <span class="text-2xl mr-2">2️⃣</span> 顏色調整
+          </h2>
+          
+          <div class="space-y-6">
+            <!-- 快速配色 -->
+            <div>
+              <label class="block text-lg font-medium mb-2">快速選擇建議配色：</label>
+              <select id="suggestedGradient" onchange="applySuggestedGradient(this.value)" class="w-full p-3 text-lg border-2 border-gray-300 rounded-xl bg-white focus:border-orange-500 outline-none">
+                <option value="">-- 點此選擇漂亮的配色 --</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-lg font-medium mb-2">顏色數量：</label>
+                <select id="colorStopCount" onchange="updateColorPickers(); generateLogo();" class="w-full p-3 text-lg border-2 border-gray-300 rounded-xl bg-white">
+                  <option value="2">2 色</option>
+                  <option value="3" selected>3 色</option>
+                  <option value="4">4 色</option>
+                  <option value="5">5 色</option>
+                  <option value="6">6 色</option>
+                  <option value="7">7 色</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-lg font-medium mb-2">漸層方向：</label>
+                <select id="gradientType" onchange="generateLogo()" class="w-full p-3 text-lg border-2 border-gray-300 rounded-xl bg-white">
+                  <option value="linear">直/橫向漸層 (線性)</option>
+                  <option value="radial">同心圓漸層 (放射)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-lg font-medium mb-2">自訂顏色 (點擊色塊修改)：</label>
+              <div id="colorPickers" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                <!-- JS 動態生成顏色選擇器 -->
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-lg font-medium mb-2">漸層角度 (旋轉)：<span id="angleValue" class="text-blue-600 font-bold">0</span>°</label>
+              <input type="range" id="gradientAngle" value="0" min="0" max="360" oninput="document.getElementById('angleValue').innerText=this.value; generateLogo()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 3: 外觀微調 -->
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+          <h2 class="text-xl font-bold mb-4 text-purple-600 border-b pb-2 flex items-center">
+            <span class="text-2xl mr-2">3️⃣</span> 外觀微調
+          </h2>
+          
+          <div class="space-y-6">
+            <div>
+              <label class="block text-lg font-medium mb-2">文字大小：</label>
+              <input type="range" id="fontSize" value="80" min="20" max="200" oninput="generateLogo()">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-lg font-medium mb-2">外框粗細：</label>
+                <input type="range" id="borderWidth" min="0" max="20" value="2" oninput="generateLogo()">
+              </div>
+              <div>
+                <label class="block text-lg font-medium mb-2">外框顏色：</label>
+                <input type="color" id="borderColor" value="#000000" oninput="generateLogo()">
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+              <input type="checkbox" id="toggleShadow" oninput="generateLogo()" class="w-6 h-6 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer">
+              <label for="toggleShadow" class="text-lg font-bold cursor-pointer select-none">開啟文字陰影 (更有立體感)</label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 右側：預覽與下載 (在電腦版會固定位置) -->
+      <div class="w-full lg:w-1/2 lg:sticky lg:top-4 h-fit">
+        <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-blue-100">
+          <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">
+            👀 預覽結果
+          </h2>
+          
+          <div class="canvas-container rounded-xl overflow-hidden border-2 border-gray-300 mb-6 flex justify-center items-center p-2">
+            <canvas id="logoCanvas" width="500" height="400" class="max-w-full h-auto"></canvas>
+          </div>
+
+          <button onclick="downloadPNG()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white text-2xl font-bold rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-3">
+            <span>📥 下載圖片 (PNG)</span>
+          </button>
+          
+          <p class="text-center text-gray-500 mt-4 text-sm">
+            如果圖片無法下載，請使用螢幕截圖。<br>
+            Designed for ease of use.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let uploadedFont = null;
+
+    // 字型上傳監聽
+    document.getElementById('fontUpload').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fontName = 'customFont';
+          const font = new FontFace(fontName, `url(${e.target.result})`);
+          font.load().then(function(loadedFont) {
+            document.fonts.add(loadedFont);
+            uploadedFont = fontName;
+            generateLogo();
+          }).catch(err => {
+            console.error('字型載入失敗:', err);
+            alert('字型載入失敗，請確認檔案格式是否正確。');
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // 建議配色資料庫
+    const suggestedGradients = {
+      2: [
+        ["#ff0000", "#0000ff"],
+        ["#00ff00", "#ff00ff"],
+        ["#f1b465", "#65a2f1"],
+        ["#65f1b4", "#6565f1"],
+        ["#d86195", "#6565f1"]
+      ],
+      3: [
+        ["#ff0000", "#ffff00", "#00ff00"],
+        ["#ff00ff", "#00ffff", "#0000ff"],
+        ["#47cf73", "#ae63e4", "#ff3c41"],
+        ["#ff6600", "#00a5dc", "#33cc33"],
+        ["#FFD700", "#FF8C00", "#FF0000"] // 金橙紅
+      ],
+      4: [
+        ["#ff0000", "#ff9900", "#33cc33", "#0066cc"],
+        ["#e8f731", "#31f740", "#31e8f7", "#f731e8"],
+        ["#057855", "#b62b6e", "#ef9421", "#9628c6"],
+        ["#cc66ff", "#66ccff", "#66ff66", "#ffff66"]
+      ],
+      5: [
+        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff"],
+        ["#ffed00", "#abe94d", "#4de98b", "#4dabe9", "#4d4de9"],
+        ["#ff0092", "#00c7f2", "#c1f1fc", "#ffc2e5", "#ffaaaa"],
+        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99"]
+      ],
+      6: [
+        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff", "#33cc33"],
+        ["#9b75c8", "#c875a2", "#c89b75", "#a2c875", "#75c89b", "#7296b4"],
+        ["#099d84", "#4d9db3", "#456acf", "#8762c9", "#ad182d", "#e15f5f"],
+        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99","#ff6600"]
+      ],
+      7: [
+        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff","#ff6600", "#ffcc00"],
+        ["#405de6", "#833ab4", "#e1306c", "#fd1d1d", "#40b2a4","#fcaf45", "#ffdc80"],
+        ["#5fc9f8", "#fecb2e", "#fd9426", "#d0e6da", "#147efb","#fc3d39", "#53d769"],
+        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99", "#33cc33", "#0066cc"]
+      ]
+    };
+
+    function updateSuggestedGradients() {
+      const count = parseInt(document.getElementById('colorStopCount').value);
+      const select = document.getElementById('suggestedGradient');
+      select.innerHTML = '<option value="">-- 點此選擇漂亮的配色 --</option>';
+
+      if (suggestedGradients[count]) {
+        suggestedGradients[count].forEach(colors => {
+          const option = document.createElement('option');
+          option.value = colors.join(',');
+          // 建立一個簡單的視覺化文字描述
+          option.textContent = `配色組合 ${Array.from(select.options).length}`;
+          
+          // 在選單中嘗試顯示顏色代碼給進階使用者看，或者用更有意義的名稱
+          // 這裡為了簡單，我們用色塊預覽在選擇後
+          option.style.background = `linear-gradient(to right, ${colors.join(',')})`;
+          option.style.color = '#fff';
+          option.style.textShadow = '0 0 2px black';
+          select.appendChild(option);
+        });
+      }
+    }
+
+    function applySuggestedGradient(value) {
+      if (!value) return;
+      const colors = value.split(',');
+      const colorStopSelect = document.getElementById('colorStopCount');
+      colorStopSelect.value = colors.length;
+      updateColorPickers(colors); // 傳入顏色陣列直接更新
+      generateLogo();
+    }
+
+    // 更新顏色選擇器，可選參數 initialColors 為顏色陣列
+    function updateColorPickers(initialColors = null) {
+      const count = parseInt(document.getElementById('colorStopCount').value);
+      const container = document.getElementById('colorPickers');
+      container.innerHTML = ''; // 清空
+
+      // 預設顏色庫，避免新增時顏色跑掉
+      const defaultColors = ['#ff0000', '#ff8c00', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'];
+      
+      // 獲取當前畫面上的顏色（如果沒有傳入 initialColors）
+      let currentColors = [];
+      if (initialColors) {
+        currentColors = initialColors;
+      } else {
+        // 嘗試保留使用者已經選好的顏色
+        const existingInputs = document.querySelectorAll('.colorInput');
+        existingInputs.forEach(input => currentColors.push(input.value));
+      }
+
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.className = 'colorInput h-12 w-full rounded cursor-pointer border-2 border-gray-200';
+        
+        // 優先使用傳入的顏色 > 現有顏色 > 預設顏色 > 黑色
+        if (i < currentColors.length) {
+            input.value = currentColors[i];
+        } else {
+            input.value = defaultColors[i % defaultColors.length] || '#000000';
+        }
+        
+        input.oninput = generateLogo;
+        container.appendChild(input);
+      }
+      
+      // 如果不是由 applySuggestedGradient 呼叫的，才去更新建議選單，避免循環
+      if (!initialColors) {
+          updateSuggestedGradients();
+      }
+    }
+
+    function generateLogo() {
+      const canvas = document.getElementById('logoCanvas');
+      const ctx = canvas.getContext('2d');
+      const text = document.getElementById('textInput').value || "範例文字";
+      const fontSize = parseInt(document.getElementById('fontSize').value);
+      const borderWidth = parseInt(document.getElementById('borderWidth').value);
+      const borderColor = document.getElementById('borderColor').value;
+      const useShadow = document.getElementById('toggleShadow').checked;
+      const angle = parseInt(document.getElementById('gradientAngle').value || 0);
+      const gradientType = document.getElementById('gradientType').value;
+      const colorInputs = document.querySelectorAll('.colorInput');
+
+      // 設置畫布大小自適應文字行數，避免被切掉
+      const lines = text.split('\n');
+      const lineHeight = fontSize * 1.3; // 增加行高
+      // 計算需要的最小高度，並給予一些 padding
+      const minHeight = Math.max(400, (lines.length + 1) * lineHeight + 50); 
+      if (canvas.height !== minHeight) {
+          canvas.height = minHeight;
+      }
+      // 寬度保持固定或稍大，確保解析度
+      if (canvas.width !== 600) {
+        canvas.width = 600;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // 確保字體字串正確
+      ctx.font = `bold ${fontSize}px ${uploadedFont ? `"${uploadedFont}"` : '"Microsoft JhengHei", "Heiti TC", sans-serif'}`;
+
+      // 陰影設定
+      if (useShadow) {
+        ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+        ctx.shadowOffsetX = fontSize * 0.08;
+        ctx.shadowOffsetY = fontSize * 0.08;
+        ctx.shadowBlur = fontSize * 0.1;
+      } else {
+        ctx.shadowColor = "transparent";
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0;
+      }
+
+      // 建立漸層
+      let gradient;
+      if (gradientType === 'linear') {
+        const radians = angle * Math.PI / 180;
+        // 計算漸層涵蓋整個畫布的長度
+        const diag = Math.sqrt(canvas.width*canvas.width + canvas.height*canvas.height);
+        const xCenter = canvas.width / 2;
+        const yCenter = canvas.height / 2;
+        
+        const x1 = xCenter - Math.cos(radians) * diag / 2;
+        const y1 = yCenter - Math.sin(radians) * diag / 2;
+        const x2 = xCenter + Math.cos(radians) * diag / 2;
+        const y2 = yCenter + Math.sin(radians) * diag / 2;
+        
+        gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      } else {
+        const r = Math.max(canvas.width, canvas.height) / 1.5;
+        gradient = ctx.createRadialGradient(
+          canvas.width / 2, canvas.height / 2, 0,
+          canvas.width / 2, canvas.height / 2, r
+        );
+      }
+
+      // 加入顏色停靠點
+      const colorCount = colorInputs.length;
+      if (colorCount > 0) {
+        colorInputs.forEach((input, index) => {
+          const stop = index / (colorCount - 1);
+          gradient.addColorStop(stop, input.value);
+        });
+      } else {
+        gradient.addColorStop(0, "black");
+        gradient.addColorStop(1, "white");
+      }
+
+      ctx.fillStyle = gradient;
+
+      // 繪製文字
+      // 計算垂直置中位置
+      const totalTextHeight = lines.length * lineHeight;
+      const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
+
+      // 先畫外框 (如果有的話)，避免陰影疊加問題
+      if (borderWidth > 0) {
+        ctx.lineWidth = borderWidth * 2; // 描邊一半在內一半在外，所以乘以2效果較好
+        ctx.strokeStyle = borderColor;
+        ctx.lineJoin = 'round'; // 圓角連接，比較滑順
+        ctx.miterLimit = 2;
+        
+        lines.forEach((line, index) => {
+          const y = startY + index * lineHeight;
+          ctx.strokeText(line, canvas.width / 2, y);
+        });
+      }
+
+      // 再畫填色 (蓋在描邊上層的一半)
+      lines.forEach((line, index) => {
+        const y = startY + index * lineHeight;
+        ctx.fillText(line, canvas.width / 2, y);
+      });
+    }
+
+    function downloadPNG() {
+      const canvas = document.getElementById('logoCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      // 自動裁切邏輯
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      let top = null, bottom = null, left = null, right = null;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const index = (y * canvas.width + x) * 4;
+          if (data[index + 3] > 0) { // alpha > 0，表示有像素
+            if (top === null) top = y;
+            bottom = y;
+            if (left === null || x < left) left = x;
+            if (right === null || x > right) right = x;
+          }
+        }
+      }
+
+      if (top !== null) {
+        // 增加一點邊距 (padding)，避免字切太貼
+        const padding = 20;
+        const cropTop = Math.max(0, top - padding);
+        const cropLeft = Math.max(0, left - padding);
+        const cropBottom = Math.min(canvas.height - 1, bottom + padding);
+        const cropRight = Math.min(canvas.width - 1, right + padding);
+
+        const trimmedWidth = cropRight - cropLeft + 1;
+        const trimmedHeight = cropBottom - cropTop + 1;
+
+        const trimmedCanvas = document.createElement('canvas');
+        trimmedCanvas.width = trimmedWidth;
+        trimmedCanvas.height = trimmedHeight;
+        const trimmedCtx = trimmedCanvas.getContext('2d');
+
+        trimmedCtx.putImageData(ctx.getImageData(cropLeft, cropTop, trimmedWidth, trimmedHeight), 0, 0);
+
+        const link = document.createElement('a');
+        link.download = `gradient_text_${new Date().getTime()}.png`;
+        link.href = trimmedCanvas.toDataURL('image/png');
+        link.click();
+      } else {
+        // 使用自定義的簡單提示框取代 alert
+        const msg = document.createElement('div');
+        msg.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 text-white px-6 py-4 rounded-xl shadow-2xl text-xl z-50';
+        msg.innerText = "畫布是空的，請先輸入文字喔！";
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 2000);
+      }
+    }
+
+    // 初始化
+    window.onload = function() {
+      updateColorPickers();
+      generateLogo();
+    };
+  </script>
+</body>
+</html>
