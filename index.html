@@ -507,10 +507,21 @@
       }
     }
 
-    // 初始化
+    // 初始化 - 等待字型載入完成
     window.onload = function() {
-      updateColorPickers();
-      generateLogo();
+      // 先載入源泉圓體字型
+      const font = new FontFace('GenSenRounded', 'url(https://xxz14701.github.io/text02/GenSenRounded2TW-H.otf)');
+      font.load().then(function(loadedFont) {
+        document.fonts.add(loadedFont);
+        console.log('源泉圓體載入成功');
+        updateColorPickers();
+        generateLogo();
+      }).catch(function(error) {
+        console.error('字型載入失敗:', error);
+        // 即使字型載入失敗，也要顯示內容
+        updateColorPickers();
+        generateLogo();
+      });
     };
   </script>
 </body>
