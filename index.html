@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>💛漸層文字</title>
+  <link rel="icon" href="01.png">
+  <title>漸層文字</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 載入自訂字型 */
@@ -510,7 +511,7 @@
     // 初始化 - 等待字型載入完成
     window.onload = function() {
       // 先載入源泉圓體字型
-      const font = new FontFace('GenSenRounded', 'url(https://xxz14701.github.io/text02/GenSenRounded2TW-H.otf)');
+      const font = new FontFace('GenSenRounded', 'url(GenSenRounded2TW-H.otf)');
       font.load().then(function(loadedFont) {
         document.fonts.add(loadedFont);
         console.log('源泉圓體載入成功');
@@ -526,5 +527,6 @@
   </script>
 </body>
 </html>
+
 
 
