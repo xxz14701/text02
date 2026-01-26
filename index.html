@@ -495,7 +495,7 @@
         trimmedCtx.putImageData(ctx.getImageData(cropLeft, cropTop, trimmedWidth, trimmedHeight), 0, 0);
 
         const link = document.createElement('a');
-        link.download = `gradient_text_${new Date().getTime()}.png`;
+        link.download = `gradi_text_${new Date().getTime()}.png`;
         link.href = trimmedCanvas.toDataURL('image/png');
         link.click();
       } else {
@@ -527,6 +527,7 @@
   </script>
 </body>
 </html>
+
 
 
 
