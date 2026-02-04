@@ -166,15 +166,23 @@
               <input type="range" id="fontSize" value="80" min="20" max="200" oninput="generateLogo()">
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label class="block text-lg font-medium mb-2">外框粗細:</label>
-                <input type="range" id="borderWidth" min="0" max="20" value="2" oninput="generateLogo()">
+            <div>
+              <label class="block text-lg font-medium mb-2">行距大小:<span id="lineHeightValue" class="text-blue-600 font-bold">1.3</span>倍</label>
+              <input type="range" id="lineHeight" value="1.3" min="0.8" max="3.0" step="0.1" oninput="document.getElementById('lineHeightValue').innerText=this.value; generateLogo()">
+            </div>
+
+            <!-- 多層邊框設定 -->
+            <div class="border-2 border-purple-200 rounded-xl p-4 bg-purple-50">
+              <div class="flex justify-between items-center mb-3">
+                <label class="text-lg font-bold text-purple-700">文字邊框設定</label>
+                <button onclick="addBorderLayer()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition">
+                  ➕ 新增邊框層
+                </button>
               </div>
-              <div>
-                <label class="block text-lg font-medium mb-2">外框顏色:</label>
-                <input type="color" id="borderColor" value="#000000" oninput="generateLogo()">
+              <div id="borderLayers" class="space-y-3">
+                <!-- 預設一層邊框 -->
               </div>
+              <p class="text-xs text-gray-600 mt-2">💡 提示：由內到外繪製，最上面的邊框在最外層</p>
             </div>
 
             <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
@@ -197,6 +205,26 @@
             <canvas id="logoCanvas" width="500" height="400" class="max-w-full h-auto"></canvas>
           </div>
 
+          <!-- 下載尺寸設定 -->
+          <div class="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h3 class="text-lg font-bold mb-3 text-gray-700">📐 下載尺寸設定</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1">寬度 (px):</label>
+                <input type="number" id="downloadWidth" value="370" min="100" max="5000" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">高度 (px):</label>
+                <input type="number" id="downloadHeight" value="320" min="100" max="5000" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none">
+              </div>
+            </div>
+            <div class="mt-2 flex gap-2">
+              <button onclick="setDownloadSize(370, 320)" class="flex-1 py-2 px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition">370×320</button>
+              <button onclick="setDownloadSize(800, 600)" class="flex-1 py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition">800×600</button>
+              <button onclick="setDownloadSize(1920, 1080)" class="flex-1 py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition">1920×1080</button>
+            </div>
+          </div>
+
           <button onclick="downloadPNG()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white text-2xl font-bold rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-3">
             <span>🔥 下載圖片 (PNG)</span>
           </button>
@@ -213,6 +241,76 @@
 
   <script>
     let uploadedFont = null;
+    let borderLayers = []; // 儲存所有邊框層
+    let borderLayerIdCounter = 0; // 用於生成唯一 ID
+
+    // 新增邊框層
+    function addBorderLayer() {
+      const layerId = borderLayerIdCounter++;
+      const layer = {
+        id: layerId,
+        width: 2,
+        color: '#000000'
+      };
+      borderLayers.push(layer);
+      renderBorderLayers();
+      generateLogo();
+    }
+
+    // 刪除邊框層
+    function removeBorderLayer(layerId) {
+      borderLayers = borderLayers.filter(layer => layer.id !== layerId);
+      renderBorderLayers();
+      generateLogo();
+    }
+
+    // 更新邊框層屬性
+    function updateBorderLayer(layerId, property, value) {
+      const layer = borderLayers.find(l => l.id === layerId);
+      if (layer) {
+        layer[property] = property === 'width' ? parseInt(value) : value;
+        generateLogo();
+      }
+    }
+
+    // 渲染邊框層列表
+    function renderBorderLayers() {
+      const container = document.getElementById('borderLayers');
+      if (borderLayers.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-3">尚無邊框層，點擊上方按鈕新增</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      // 反向顯示，讓最外層的在上面
+      [...borderLayers].reverse().forEach((layer, index) => {
+        const layerDiv = document.createElement('div');
+        layerDiv.className = 'bg-white p-3 rounded-lg border border-gray-300 shadow-sm';
+        layerDiv.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium text-gray-700">邊框層 ${borderLayers.length - index} ${index === 0 ? '(最外層)' : ''}</span>
+            <button onclick="removeBorderLayer(${layer.id})" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition">
+              🗑️ 刪除
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">粗細: <span class="text-blue-600">${layer.width}px</span></label>
+              <input type="range" value="${layer.width}" min="1" max="30" 
+                oninput="this.previousElementSibling.querySelector('span').innerText=this.value+'px'; updateBorderLayer(${layer.id}, 'width', this.value)" 
+                class="w-full">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">顏色:</label>
+              <input type="color" value="${layer.color}" 
+                oninput="updateBorderLayer(${layer.id}, 'color', this.value)" 
+                class="w-full h-10 rounded cursor-pointer border-2 border-gray-200">
+            </div>
+          </div>
+        `;
+        container.appendChild(layerDiv);
+      });
+    }
 
     // 字型上傳監聽
     document.getElementById('fontUpload').addEventListener('change', function(event) {
@@ -283,17 +381,11 @@
       select.innerHTML = '<option value="">-- 點此選擇漂亮的配色 --</option>';
 
       if (suggestedGradients[count]) {
-        suggestedGradients[count].forEach(colors => {
+        suggestedGradients[count].forEach((colors, index) => {
           const option = document.createElement('option');
           option.value = colors.join(',');
-          // 建立一個簡單的視覺化文字描述
-          option.textContent = `配色組合 ${Array.from(select.options).length}`;
-          
-          // 在選單中嘗試顯示顏色代碼給進階使用者看,或者用更有意義的名稱
-          // 這裡為了簡單,我們用色塊預覽在選擇後
-          option.style.background = `linear-gradient(to right, ${colors.join(',')})`;
-          option.style.color = '#fff';
-          option.style.textShadow = '0 0 2px black';
+          // 顯示配色編號和顏色代碼
+          option.textContent = `配色 ${index + 1}: ${colors.join(' → ')}`;
           select.appendChild(option);
         });
       }
@@ -354,8 +446,7 @@
       const ctx = canvas.getContext('2d');
       const text = document.getElementById('textInput').value || "範例文字";
       const fontSize = parseInt(document.getElementById('fontSize').value);
-      const borderWidth = parseInt(document.getElementById('borderWidth').value);
-      const borderColor = document.getElementById('borderColor').value;
+      const lineHeightMultiplier = parseFloat(document.getElementById('lineHeight').value);
       const useShadow = document.getElementById('toggleShadow').checked;
       const angle = parseInt(document.getElementById('gradientAngle').value || 0);
       const gradientType = document.getElementById('gradientType').value;
@@ -363,7 +454,7 @@
 
       // 設置畫布大小自適應文字行數,避免被切掉
       const lines = text.split('\n');
-      const lineHeight = fontSize * 1.3; // 增加行高
+      const lineHeight = fontSize * lineHeightMultiplier; // 使用可調整的行距
       // 計算需要的最小高度,並給予一些 padding
       const minHeight = Math.max(400, (lines.length + 1) * lineHeight + 50); 
       if (canvas.height !== minHeight) {
@@ -435,11 +526,13 @@
       const totalTextHeight = lines.length * lineHeight;
       const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
 
-      // 先畫外框 (如果有的話),避免陰影疊加問題
-      if (borderWidth > 0) {
-        ctx.lineWidth = borderWidth * 2; // 描邊一半在內一半在外,所以乘以2效果較好
-        ctx.strokeStyle = borderColor;
-        ctx.lineJoin = 'round'; // 圓角連接,比較滑順
+      // 先畫多層外框（從最外層到最內層），避免陰影疊加問題
+      // 反向迭代，從最外層（陣列最後）到最內層（陣列開頭）
+      for (let i = borderLayers.length - 1; i >= 0; i--) {
+        const layer = borderLayers[i];
+        ctx.lineWidth = layer.width * 2; // 描邊一半在內一半在外，所以乘以2效果較好
+        ctx.strokeStyle = layer.color;
+        ctx.lineJoin = 'round'; // 圓角連接，比較滑順
         ctx.miterLimit = 2;
         
         lines.forEach((line, index) => {
@@ -448,16 +541,25 @@
         });
       }
 
-      // 再畫填色 (蓋在描邊上層的一半)
+      // 再畫填色（蓋在描邊上層）
       lines.forEach((line, index) => {
         const y = startY + index * lineHeight;
         ctx.fillText(line, canvas.width / 2, y);
       });
     }
 
+    function setDownloadSize(width, height) {
+      document.getElementById('downloadWidth').value = width;
+      document.getElementById('downloadHeight').value = height;
+    }
+
     function downloadPNG() {
       const canvas = document.getElementById('logoCanvas');
       const ctx = canvas.getContext('2d');
+      
+      // 獲取使用者設定的下載尺寸
+      const downloadWidth = parseInt(document.getElementById('downloadWidth').value) || 1200;
+      const downloadHeight = parseInt(document.getElementById('downloadHeight').value) || 800;
       
       // 自動裁切邏輯
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -487,16 +589,32 @@
         const trimmedWidth = cropRight - cropLeft + 1;
         const trimmedHeight = cropBottom - cropTop + 1;
 
+        // 建立裁切後的暫存畫布
         const trimmedCanvas = document.createElement('canvas');
         trimmedCanvas.width = trimmedWidth;
         trimmedCanvas.height = trimmedHeight;
         const trimmedCtx = trimmedCanvas.getContext('2d');
-
         trimmedCtx.putImageData(ctx.getImageData(cropLeft, cropTop, trimmedWidth, trimmedHeight), 0, 0);
 
+        // 建立最終輸出畫布，使用使用者設定的尺寸
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = downloadWidth;
+        finalCanvas.height = downloadHeight;
+        const finalCtx = finalCanvas.getContext('2d');
+
+        // 計算縮放比例，保持原始比例並置中
+        const scale = Math.min(downloadWidth / trimmedWidth, downloadHeight / trimmedHeight);
+        const scaledWidth = trimmedWidth * scale;
+        const scaledHeight = trimmedHeight * scale;
+        const x = (downloadWidth - scaledWidth) / 2;
+        const y = (downloadHeight - scaledHeight) / 2;
+
+        // 繪製到最終畫布
+        finalCtx.drawImage(trimmedCanvas, x, y, scaledWidth, scaledHeight);
+
         const link = document.createElement('a');
-        link.download = `gradi_text_${new Date().getTime()}.png`;
-        link.href = trimmedCanvas.toDataURL('image/png');
+        link.download = `gradi_text_${downloadWidth}x${downloadHeight}_${new Date().getTime()}.png`;
+        link.href = finalCanvas.toDataURL('image/png');
         link.click();
       } else {
         // 使用自定義的簡單提示框取代 alert
@@ -510,6 +628,9 @@
 
     // 初始化 - 等待字型載入完成
     window.onload = function() {
+      // 初始化預設邊框層（一層黑色邊框）
+      addBorderLayer();
+      
       // 先載入源泉圓體字型
       const font = new FontFace('GenSenRounded', 'url(GenSenRounded2TW-H.otf)');
       font.load().then(function(loadedFont) {
@@ -527,8 +648,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
