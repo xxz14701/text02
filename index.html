@@ -151,6 +151,16 @@
               <label class="block text-lg font-medium mb-2">漸層角度 (旋轉):<span id="angleValue" class="text-blue-600 font-bold">0</span>°</label>
               <input type="range" id="gradientAngle" value="0" min="0" max="360" oninput="document.getElementById('angleValue').innerText=this.value; generateLogo()">
             </div>
+            
+            <!-- 新增：漸層範圍控制 -->
+            <div class="border-2 border-orange-200 rounded-xl p-4 bg-orange-50">
+              <label class="block text-lg font-bold text-orange-700 mb-2">✨ 漸層範圍調整</label>
+              <div class="flex items-center space-x-3 mb-2">
+                <input type="checkbox" id="autoFitGradient" checked oninput="generateLogo()" class="w-6 h-6 text-orange-600 rounded focus:ring-orange-500 border-gray-300 cursor-pointer">
+                <label for="autoFitGradient" class="text-base font-medium cursor-pointer select-none">自動貼合文字 (推薦)</label>
+              </div>
+              <p class="text-sm text-gray-600">💡 勾選後，漸層會自動調整到文字大小，讓顏色更鮮明</p>
+            </div>
           </div>
         </div>
 
@@ -198,58 +208,153 @@
       <div class="w-full lg:w-1/2 lg:sticky lg:top-4 h-fit">
         <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-blue-100">
           <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">
-            👀 預覽結果
+            <span class="text-3xl mr-2">👁️</span>預覽效果
           </h2>
           
-          <div class="canvas-container rounded-xl overflow-hidden border-2 border-gray-300 mb-6 flex justify-center items-center p-2">
-            <canvas id="logoCanvas" width="500" height="400" class="max-w-full h-auto"></canvas>
+          <div class="canvas-container rounded-xl overflow-hidden shadow-inner mb-6">
+            <canvas id="logoCanvas" class="w-full h-auto"></canvas>
           </div>
 
-          <!-- 下載尺寸設定 -->
-          <div class="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <h3 class="text-lg font-bold mb-3 text-gray-700">📐 下載尺寸設定</h3>
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-green-600 flex items-center border-b pb-2">
+              <span class="text-2xl mr-2">💾</span>下載設定
+            </h3>
+            
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-sm font-medium mb-1">寬度 (px):</label>
-                <input type="number" id="downloadWidth" value="370" min="100" max="5000" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none">
+                <label class="block text-base font-medium mb-1">寬度 (像素):</label>
+                <input type="number" id="downloadWidth" value="370" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg">
               </div>
               <div>
-                <label class="block text-sm font-medium mb-1">高度 (px):</label>
-                <input type="number" id="downloadHeight" value="320" min="100" max="5000" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 outline-none">
+                <label class="block text-base font-medium mb-1">高度 (像素):</label>
+                <input type="number" id="downloadHeight" value="320" class="w-full p-2 text-lg border-2 border-gray-300 rounded-lg">
               </div>
             </div>
-            <div class="mt-2 flex gap-2">
-              <button onclick="setDownloadSize(370, 320)" class="flex-1 py-2 px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition">370×320</button>
-              <button onclick="setDownloadSize(800, 600)" class="flex-1 py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition">800×600</button>
-              <button onclick="setDownloadSize(1920, 1080)" class="flex-1 py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition">1920×1080</button>
-            </div>
-          </div>
 
-          <button onclick="downloadPNG()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white text-2xl font-bold rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-3">
-            <span>🔥 下載圖片 (PNG)</span>
-          </button>
-          
-          <p class="text-center text-gray-500 mt-4 text-sm">
-            Billy ^.^ | Program improved by AI @2026<br>
+            <button onclick="downloadPNG()" class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-4 px-6 rounded-xl text-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2">
+              <span class="text-2xl">⬇️</span>
+              <span>下載 PNG 圖片</span>
+            </button>
             
-          </p>
+            <p class="text-sm text-gray-600 text-center">💡 下載的圖片會自動裁切空白並依比例縮放</p>
+          </div>
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 
   <script>
-    let uploadedFont = null;
-    let borderLayers = []; // 儲存所有邊框層
-    let borderLayerIdCounter = 0; // 用於生成唯一 ID
+    // --- 全域變數 ---
+    let uploadedFont = null; // 儲存上傳的字型名稱
+    let borderLayers = []; // 儲存多層邊框的設定
 
-    // 新增邊框層
+    // --- 字型上傳功能 ---
+    document.getElementById('fontUpload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const fontData = event.target.result;
+          const fontName = file.name.replace(/\.[^/.]+$/, "");
+          const newFont = new FontFace(fontName, `url(${fontData})`);
+          
+          newFont.load().then(function(loadedFont) {
+            document.fonts.add(loadedFont);
+            uploadedFont = fontName;
+            console.log(`字型 ${fontName} 上傳成功`);
+            generateLogo();
+          }).catch(function(error) {
+            console.error('字型載入失敗:', error);
+            alert('字型載入失敗,請確認檔案格式是否正確');
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // --- 建議配色資料 ---
+    const suggestedGradients = {
+      "日出橙黃": ["#FF6B6B", "#FFD93D", "#6BCF7F"],
+      "海洋藍綠": ["#667eea", "#764ba2", "#f093fb"],
+      "森林綠": ["#11998e", "#38ef7d"],
+      "火焰紅": ["#f12711", "#f5af19"],
+      "紫羅蘭": ["#C33764", "#1D2671"],
+      "粉紅漸變": ["#ff9a9e", "#fecfef", "#ffecd2"],
+      "藍色夢幻": ["#a1c4fd", "#c2e9fb"],
+      "金色輝煌": ["#f7971e", "#ffd200"],
+      "薄荷綠": ["#00b09b", "#96c93d"],
+      "櫻花粉": ["#fbc2eb", "#a6c1ee"],
+      "彩虹七色": ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"],
+      "晨曦漸層": ["#ffecd2", "#fcb69f"],
+      "極光綠": ["#00c6ff", "#0072ff"],
+      "糖果色": ["#FFA8B8", "#FFDC85", "#98E8C1", "#7EC8E3"]
+    };
+
+    // --- 初始化建議配色下拉選單 ---
+    function initSuggestedGradients() {
+      const select = document.getElementById('suggestedGradient');
+      for (const [name, colors] of Object.entries(suggestedGradients)) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      }
+    }
+
+    // --- 套用建議配色 ---
+    function applySuggestedGradient(name) {
+      if (!name) return;
+      const colors = suggestedGradients[name];
+      if (!colors) return;
+      
+      document.getElementById('colorStopCount').value = colors.length;
+      updateColorPickers();
+      
+      const colorInputs = document.querySelectorAll('.colorInput');
+      colorInputs.forEach((input, index) => {
+        if (index < colors.length) {
+          input.value = colors[index];
+        }
+      });
+      
+      generateLogo();
+    }
+
+    // --- 動態生成顏色選擇器 ---
+    function updateColorPickers() {
+      const count = parseInt(document.getElementById('colorStopCount').value);
+      const container = document.getElementById('colorPickers');
+      container.innerHTML = '';
+      
+      const defaultColors = ["#FF6B6B", "#FFD93D", "#6BCF7F", "#667eea", "#f093fb", "#38ef7d", "#f5af19"];
+      
+      for (let i = 0; i < count; i++) {
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'flex flex-col items-center';
+        
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.className = 'colorInput';
+        input.value = defaultColors[i % defaultColors.length];
+        input.oninput = generateLogo;
+        
+        const label = document.createElement('label');
+        label.className = 'text-sm text-gray-600 mt-1';
+        label.textContent = `顏色 ${i + 1}`;
+        
+        colorDiv.appendChild(input);
+        colorDiv.appendChild(label);
+        container.appendChild(colorDiv);
+      }
+    }
+
+    // --- 多層邊框功能 ---
     function addBorderLayer() {
-      const layerId = borderLayerIdCounter++;
+      const layerId = Date.now(); // 用時間戳當 ID 避免重複
       const layer = {
         id: layerId,
-        width: 2,
+        width: 5,
         color: '#000000'
       };
       borderLayers.push(layer);
@@ -257,210 +362,77 @@
       generateLogo();
     }
 
-    // 刪除邊框層
-    function removeBorderLayer(layerId) {
-      borderLayers = borderLayers.filter(layer => layer.id !== layerId);
+    function removeBorderLayer(id) {
+      borderLayers = borderLayers.filter(layer => layer.id !== id);
       renderBorderLayers();
       generateLogo();
     }
 
-    // 更新邊框層屬性
-    function updateBorderLayer(layerId, property, value) {
-      const layer = borderLayers.find(l => l.id === layerId);
+    function updateBorderLayer(id, property, value) {
+      const layer = borderLayers.find(l => l.id === id);
       if (layer) {
         layer[property] = property === 'width' ? parseInt(value) : value;
         generateLogo();
       }
     }
 
-    // 渲染邊框層列表
     function renderBorderLayers() {
       const container = document.getElementById('borderLayers');
+      container.innerHTML = '';
+      
       if (borderLayers.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-3">尚無邊框層，點擊上方按鈕新增</p>';
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">目前沒有邊框，點擊上方按鈕新增</p>';
         return;
       }
-
-      container.innerHTML = '';
-      // 反向顯示，讓最外層的在上面
-      [...borderLayers].reverse().forEach((layer, index) => {
+      
+      borderLayers.forEach((layer, index) => {
         const layerDiv = document.createElement('div');
-        layerDiv.className = 'bg-white p-3 rounded-lg border border-gray-300 shadow-sm';
+        layerDiv.className = 'flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200';
+        
         layerDiv.innerHTML = `
-          <div class="flex items-center justify-between mb-2">
-            <span class="font-medium text-gray-700">邊框層 ${borderLayers.length - index} ${index === 0 ? '(最外層)' : ''}</span>
-            <button onclick="removeBorderLayer(${layer.id})" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition">
-              🗑️ 刪除
-            </button>
+          <span class="text-sm font-bold text-purple-600 min-w-[50px]">第${index + 1}層</span>
+          <div class="flex flex-col items-center">
+            <label class="text-xs text-gray-600 mb-1">顏色</label>
+            <input type="color" value="${layer.color}" 
+                   onchange="updateBorderLayer(${layer.id}, 'color', this.value)"
+                   class="w-12 h-12 rounded cursor-pointer border-2 border-gray-300">
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium mb-1">粗細: <span class="text-blue-600">${layer.width}px</span></label>
-              <input type="range" value="${layer.width}" min="1" max="30" 
-                oninput="this.previousElementSibling.querySelector('span').innerText=this.value+'px'; updateBorderLayer(${layer.id}, 'width', this.value)" 
-                class="w-full">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">顏色:</label>
-              <input type="color" value="${layer.color}" 
-                oninput="updateBorderLayer(${layer.id}, 'color', this.value)" 
-                class="w-full h-10 rounded cursor-pointer border-2 border-gray-200">
-            </div>
+          <div class="flex-1 min-w-[120px]">
+            <label class="text-xs text-gray-600 block mb-1">寬度 (px):</label>
+            <input type="number" min="1" max="50" value="${layer.width}" 
+                   oninput="updateBorderLayer(${layer.id}, 'width', this.value)"
+                   class="w-full p-2 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none">
           </div>
+          <button onclick="removeBorderLayer(${layer.id})" 
+                  class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition shrink-0">
+            🗑️
+          </button>
         `;
+        
         container.appendChild(layerDiv);
       });
     }
 
-    // 字型上傳監聽
-    document.getElementById('fontUpload').addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const fontName = 'customFont';
-          const font = new FontFace(fontName, `url(${e.target.result})`);
-          font.load().then(function(loadedFont) {
-            document.fonts.add(loadedFont);
-            uploadedFont = fontName;
-            generateLogo();
-          }).catch(err => {
-            console.error('字型載入失敗:', err);
-            alert('字型載入失敗,請確認檔案格式是否正確。');
-          });
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // 建議配色資料庫
-    const suggestedGradients = {
-      2: [
-        ["#ff0000", "#0000ff"],
-        ["#00ff00", "#ff00ff"],
-        ["#f1b465", "#65a2f1"],
-        ["#65f1b4", "#6565f1"],
-        ["#d86195", "#6565f1"]
-      ],
-      3: [
-        ["#ff0000", "#ffff00", "#00ff00"],
-        ["#ff00ff", "#00ffff", "#0000ff"],
-        ["#47cf73", "#ae63e4", "#ff3c41"],
-        ["#ff6600", "#00a5dc", "#33cc33"],
-        ["#FFD700", "#FF8C00", "#FF0000"] // 金橙紅
-      ],
-      4: [
-        ["#ff0000", "#ff9900", "#33cc33", "#0066cc"],
-        ["#e8f731", "#31f740", "#31e8f7", "#f731e8"],
-        ["#057855", "#b62b6e", "#ef9421", "#9628c6"],
-        ["#cc66ff", "#66ccff", "#66ff66", "#ffff66"]
-      ],
-      5: [
-        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff"],
-        ["#ffed00", "#abe94d", "#4de98b", "#4dabe9", "#4d4de9"],
-        ["#ff0092", "#00c7f2", "#c1f1fc", "#ffc2e5", "#ffaaaa"],
-        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99"]
-      ],
-      6: [
-        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff", "#33cc33"],
-        ["#9b75c8", "#c875a2", "#c89b75", "#a2c875", "#75c89b", "#7296b4"],
-        ["#099d84", "#4d9db3", "#456acf", "#8762c9", "#ad182d", "#e15f5f"],
-        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99","#ff6600"]
-      ],
-      7: [
-        ["#ff0000", "#ff6600", "#ffff00", "#66ff66", "#00ccff","#ff6600", "#ffcc00"],
-        ["#405de6", "#833ab4", "#e1306c", "#fd1d1d", "#40b2a4","#fcaf45", "#ffdc80"],
-        ["#5fc9f8", "#fecb2e", "#fd9426", "#d0e6da", "#147efb","#fc3d39", "#53d769"],
-        ["#cc99ff", "#9999ff", "#99ffcc", "#ffff99", "#ffcc99", "#33cc33", "#0066cc"]
-      ]
-    };
-
-    function updateSuggestedGradients() {
-      const count = parseInt(document.getElementById('colorStopCount').value);
-      const select = document.getElementById('suggestedGradient');
-      select.innerHTML = '<option value="">-- 點此選擇漂亮的配色 --</option>';
-
-      if (suggestedGradients[count]) {
-        suggestedGradients[count].forEach((colors, index) => {
-          const option = document.createElement('option');
-          option.value = colors.join(',');
-          // 顯示配色編號和顏色代碼
-          option.textContent = `配色 ${index + 1}: ${colors.join(' → ')}`;
-          select.appendChild(option);
-        });
-      }
-    }
-
-    function applySuggestedGradient(value) {
-      if (!value) return;
-      const colors = value.split(',');
-      const colorStopSelect = document.getElementById('colorStopCount');
-      colorStopSelect.value = colors.length;
-      updateColorPickers(colors); // 傳入顏色陣列直接更新
-      generateLogo();
-    }
-
-    // 更新顏色選擇器,可選參數 initialColors 為顏色陣列
-    function updateColorPickers(initialColors = null) {
-      const count = parseInt(document.getElementById('colorStopCount').value);
-      const container = document.getElementById('colorPickers');
-      container.innerHTML = ''; // 清空
-
-      // 預設顏色庫,避免新增時顏色跑掉
-      const defaultColors = ['#ff0000', '#ff8c00', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'];
-      
-      // 獲取當前畫面上的顏色(如果沒有傳入 initialColors)
-      let currentColors = [];
-      if (initialColors) {
-        currentColors = initialColors;
-      } else {
-        // 嘗試保留使用者已經選好的顏色
-        const existingInputs = document.querySelectorAll('.colorInput');
-        existingInputs.forEach(input => currentColors.push(input.value));
-      }
-
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.className = 'colorInput h-12 w-full rounded cursor-pointer border-2 border-gray-200';
-        
-        // 優先使用傳入的顏色 > 現有顏色 > 預設顏色 > 黑色
-        if (i < currentColors.length) {
-            input.value = currentColors[i];
-        } else {
-            input.value = defaultColors[i % defaultColors.length] || '#000000';
-        }
-        
-        input.oninput = generateLogo;
-        container.appendChild(input);
-      }
-      
-      // 如果不是由 applySuggestedGradient 呼叫的,才去更新建議選單,避免循環
-      if (!initialColors) {
-          updateSuggestedGradients();
-      }
-    }
-
+    // --- 主要繪圖函式 (已改善漸層範圍) ---
     function generateLogo() {
       const canvas = document.getElementById('logoCanvas');
       const ctx = canvas.getContext('2d');
-      const text = document.getElementById('textInput').value || "範例文字";
+      const text = document.getElementById('textInput').value || '';
       const fontSize = parseInt(document.getElementById('fontSize').value);
-      const lineHeightMultiplier = parseFloat(document.getElementById('lineHeight').value);
+      const angle = parseInt(document.getElementById('gradientAngle').value);
       const useShadow = document.getElementById('toggleShadow').checked;
-      const angle = parseInt(document.getElementById('gradientAngle').value || 0);
+      const lineHeightMultiplier = parseFloat(document.getElementById('lineHeight').value);
       const gradientType = document.getElementById('gradientType').value;
+      const autoFitGradient = document.getElementById('autoFitGradient').checked;
       const colorInputs = document.querySelectorAll('.colorInput');
 
       // 設置畫布大小自適應文字行數,避免被切掉
       const lines = text.split('\n');
-      const lineHeight = fontSize * lineHeightMultiplier; // 使用可調整的行距
-      // 計算需要的最小高度,並給予一些 padding
+      const lineHeight = fontSize * lineHeightMultiplier;
       const minHeight = Math.max(400, (lines.length + 1) * lineHeight + 50); 
       if (canvas.height !== minHeight) {
           canvas.height = minHeight;
       }
-      // 寬度保持固定或稍大,確保解析度
       if (canvas.width !== 600) {
         canvas.width = 600;
       }
@@ -468,7 +440,6 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // 使用源泉圓體作為預設字型
       ctx.font = `bold ${fontSize}px ${uploadedFont ? `"${uploadedFont}"` : '"GenSenRounded", "Microsoft JhengHei", "Heiti TC", sans-serif'}`;
 
       // 陰影設定
@@ -484,27 +455,82 @@
         ctx.shadowBlur = 0;
       }
 
+      // === 改善重點：計算文字實際範圍 ===
+      let textBounds = {
+        minX: canvas.width,
+        maxX: 0,
+        minY: canvas.height,
+        maxY: 0
+      };
+      
+      if (autoFitGradient && text) {
+        // 計算所有文字行的邊界
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
+        
+        lines.forEach((line, index) => {
+          const y = startY + index * lineHeight;
+          const metrics = ctx.measureText(line);
+          const textWidth = metrics.width;
+          const textHeight = fontSize; // 近似高度
+          
+          const x = canvas.width / 2;
+          textBounds.minX = Math.min(textBounds.minX, x - textWidth / 2);
+          textBounds.maxX = Math.max(textBounds.maxX, x + textWidth / 2);
+          textBounds.minY = Math.min(textBounds.minY, y - textHeight / 2);
+          textBounds.maxY = Math.max(textBounds.maxY, y + textHeight / 2);
+        });
+      }
+
       // 建立漸層
       let gradient;
       if (gradientType === 'linear') {
         const radians = angle * Math.PI / 180;
-        // 計算漸層涵蓋整個畫布的長度
-        const diag = Math.sqrt(canvas.width*canvas.width + canvas.height*canvas.height);
-        const xCenter = canvas.width / 2;
-        const yCenter = canvas.height / 2;
         
-        const x1 = xCenter - Math.cos(radians) * diag / 2;
-        const y1 = yCenter - Math.sin(radians) * diag / 2;
-        const x2 = xCenter + Math.cos(radians) * diag / 2;
-        const y2 = yCenter + Math.sin(radians) * diag / 2;
+        let x1, y1, x2, y2;
+        
+        if (autoFitGradient && text && textBounds.maxX > textBounds.minX) {
+          // 使用文字實際範圍
+          const centerX = (textBounds.minX + textBounds.maxX) / 2;
+          const centerY = (textBounds.minY + textBounds.maxY) / 2;
+          const width = textBounds.maxX - textBounds.minX;
+          const height = textBounds.maxY - textBounds.minY;
+          const diag = Math.sqrt(width * width + height * height);
+          
+          x1 = centerX - Math.cos(radians) * diag / 2;
+          y1 = centerY - Math.sin(radians) * diag / 2;
+          x2 = centerX + Math.cos(radians) * diag / 2;
+          y2 = centerY + Math.sin(radians) * diag / 2;
+        } else {
+          // 使用整個畫布
+          const diag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
+          const xCenter = canvas.width / 2;
+          const yCenter = canvas.height / 2;
+          
+          x1 = xCenter - Math.cos(radians) * diag / 2;
+          y1 = yCenter - Math.sin(radians) * diag / 2;
+          x2 = xCenter + Math.cos(radians) * diag / 2;
+          y2 = yCenter + Math.sin(radians) * diag / 2;
+        }
         
         gradient = ctx.createLinearGradient(x1, y1, x2, y2);
       } else {
-        const r = Math.max(canvas.width, canvas.height) / 1.5;
-        gradient = ctx.createRadialGradient(
-          canvas.width / 2, canvas.height / 2, 0,
-          canvas.width / 2, canvas.height / 2, r
-        );
+        // 放射狀漸層
+        let centerX, centerY, radius;
+        
+        if (autoFitGradient && text && textBounds.maxX > textBounds.minX) {
+          centerX = (textBounds.minX + textBounds.maxX) / 2;
+          centerY = (textBounds.minY + textBounds.maxY) / 2;
+          const width = textBounds.maxX - textBounds.minX;
+          const height = textBounds.maxY - textBounds.minY;
+          radius = Math.sqrt(width * width + height * height) / 2;
+        } else {
+          centerX = canvas.width / 2;
+          centerY = canvas.height / 2;
+          radius = Math.max(canvas.width, canvas.height) / 1.5;
+        }
+        
+        gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
       }
 
       // 加入顏色停駐點
@@ -522,17 +548,15 @@
       ctx.fillStyle = gradient;
 
       // 繪製文字
-      // 計算垂直置中位置
       const totalTextHeight = lines.length * lineHeight;
       const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
 
-      // 先畫多層外框（從最外層到最內層），避免陰影疊加問題
-      // 反向迭代，從最外層（陣列最後）到最內層（陣列開頭）
+      // 先畫多層外框
       for (let i = borderLayers.length - 1; i >= 0; i--) {
         const layer = borderLayers[i];
-        ctx.lineWidth = layer.width * 2; // 描邊一半在內一半在外，所以乘以2效果較好
+        ctx.lineWidth = layer.width * 2;
         ctx.strokeStyle = layer.color;
-        ctx.lineJoin = 'round'; // 圓角連接，比較滑順
+        ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
         
         lines.forEach((line, index) => {
@@ -541,23 +565,17 @@
         });
       }
 
-      // 再畫填色（蓋在描邊上層）
+      // 再畫填色
       lines.forEach((line, index) => {
         const y = startY + index * lineHeight;
         ctx.fillText(line, canvas.width / 2, y);
       });
     }
 
-    function setDownloadSize(width, height) {
-      document.getElementById('downloadWidth').value = width;
-      document.getElementById('downloadHeight').value = height;
-    }
-
     function downloadPNG() {
       const canvas = document.getElementById('logoCanvas');
       const ctx = canvas.getContext('2d');
       
-      // 獲取使用者設定的下載尺寸
       const downloadWidth = parseInt(document.getElementById('downloadWidth').value) || 1200;
       const downloadHeight = parseInt(document.getElementById('downloadHeight').value) || 800;
       
@@ -569,7 +587,7 @@
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
           const index = (y * canvas.width + x) * 4;
-          if (data[index + 3] > 0) { // alpha > 0,表示有像素
+          if (data[index + 3] > 0) {
             if (top === null) top = y;
             bottom = y;
             if (left === null || x < left) left = x;
@@ -579,7 +597,6 @@
       }
 
       if (top !== null) {
-        // 增加一點邊距 (padding),避免字切太貼
         const padding = 20;
         const cropTop = Math.max(0, top - padding);
         const cropLeft = Math.max(0, left - padding);
@@ -589,27 +606,23 @@
         const trimmedWidth = cropRight - cropLeft + 1;
         const trimmedHeight = cropBottom - cropTop + 1;
 
-        // 建立裁切後的暫存畫布
         const trimmedCanvas = document.createElement('canvas');
         trimmedCanvas.width = trimmedWidth;
         trimmedCanvas.height = trimmedHeight;
         const trimmedCtx = trimmedCanvas.getContext('2d');
         trimmedCtx.putImageData(ctx.getImageData(cropLeft, cropTop, trimmedWidth, trimmedHeight), 0, 0);
 
-        // 建立最終輸出畫布，使用使用者設定的尺寸
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = downloadWidth;
         finalCanvas.height = downloadHeight;
         const finalCtx = finalCanvas.getContext('2d');
 
-        // 計算縮放比例，保持原始比例並置中
         const scale = Math.min(downloadWidth / trimmedWidth, downloadHeight / trimmedHeight);
         const scaledWidth = trimmedWidth * scale;
         const scaledHeight = trimmedHeight * scale;
         const x = (downloadWidth - scaledWidth) / 2;
         const y = (downloadHeight - scaledHeight) / 2;
 
-        // 繪製到最終畫布
         finalCtx.drawImage(trimmedCanvas, x, y, scaledWidth, scaledHeight);
 
         const link = document.createElement('a');
@@ -617,7 +630,6 @@
         link.href = finalCanvas.toDataURL('image/png');
         link.click();
       } else {
-        // 使用自定義的簡單提示框取代 alert
         const msg = document.createElement('div');
         msg.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 text-white px-6 py-4 rounded-xl shadow-2xl text-xl z-50';
         msg.innerText = "畫布是空的,請先輸入文字喔!";
@@ -626,12 +638,11 @@
       }
     }
 
-    // 初始化 - 等待字型載入完成
+    // 初始化
     window.onload = function() {
-      // 初始化預設邊框層（一層黑色邊框）
       addBorderLayer();
+      initSuggestedGradients();
       
-      // 先載入源泉圓體字型
       const font = new FontFace('GenSenRounded', 'url(GenSenRounded2TW-H.otf)');
       font.load().then(function(loadedFont) {
         document.fonts.add(loadedFont);
@@ -640,7 +651,6 @@
         generateLogo();
       }).catch(function(error) {
         console.error('字型載入失敗:', error);
-        // 即使字型載入失敗，也要顯示內容
         updateColorPickers();
         generateLogo();
       });
