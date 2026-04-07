@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="shortcut icon" href="01.png">
-  <title>漸層文字</title>
+  <title>漸層文字產生器</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 載入自訂字型 */
@@ -15,7 +15,7 @@
       font-style: normal;
     }
 
-    /* 重點針對長輩優化的額外樣式 */
+    /* 針對操作優化的樣式 */
     body {
       font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
       background-color: #f3f4f6;
@@ -73,12 +73,10 @@
   <!-- 標題區 -->
   <header class="bg-blue-600 text-white p-6 text-center shadow-lg">
     <h1 class="text-3xl md:text-4xl font-bold tracking-wide">💛漸層文字💛</h1>
-    
   </header>
 
   <div class="container mx-auto p-4 max-w-6xl">
     
-    <!-- 主要佈局:電腦版左右分欄,手機版上下堆疊 -->
     <div class="flex flex-col lg:flex-row gap-8">
       
       <!-- 左側:控制面板 -->
@@ -110,7 +108,6 @@
           </h2>
           
           <div class="space-y-6">
-            <!-- 快速配色 -->
             <div>
               <label class="block text-lg font-medium mb-2">快速選擇建議配色:</label>
               <select id="suggestedGradient" onchange="applySuggestedGradient(this.value)" class="w-full p-3 text-lg border-2 border-gray-300 rounded-xl bg-white focus:border-orange-500 outline-none">
@@ -143,7 +140,7 @@
             <div>
               <label class="block text-lg font-medium mb-2">自訂顏色 (點擊色塊修改):</label>
               <div id="colorPickers" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                <!-- JS 動態生成顏色選擇器 -->
+                <!-- JS 動態生成 -->
               </div>
             </div>
 
@@ -152,14 +149,12 @@
               <input type="range" id="gradientAngle" value="0" min="0" max="360" oninput="document.getElementById('angleValue').innerText=this.value; generateLogo()">
             </div>
             
-            <!-- 新增：漸層範圍控制 -->
             <div class="border-2 border-orange-200 rounded-xl p-4 bg-orange-50">
               <label class="block text-lg font-bold text-orange-700 mb-2">✨ 漸層範圍調整</label>
               <div class="flex items-center space-x-3 mb-2">
                 <input type="checkbox" id="autoFitGradient" checked oninput="generateLogo()" class="w-6 h-6 text-orange-600 rounded focus:ring-orange-500 border-gray-300 cursor-pointer">
                 <label for="autoFitGradient" class="text-base font-medium cursor-pointer select-none">自動貼合文字 (推薦)</label>
               </div>
-              <p class="text-sm text-gray-600">💡 勾選後，漸層會自動調整到文字大小，讓顏色更鮮明</p>
             </div>
           </div>
         </div>
@@ -190,9 +185,9 @@
                 </button>
               </div>
               <div id="borderLayers" class="space-y-3">
-                <!-- 預設一層邊框 -->
+                <!-- 動態生成邊框層 -->
               </div>
-              <p class="text-xs text-gray-600 mt-2">💡 提示：由內到外繪製，最上面的邊框在最外層</p>
+              <p class="text-xs text-gray-600 mt-2">💡 繪製順序：清單中後面的圖層會被畫在前面（清單底部的圖層是最外圈）</p>
             </div>
 
             <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
@@ -204,7 +199,7 @@
 
       </div>
 
-      <!-- 右側:預覽與下載 (在電腦版會固定位置) -->
+      <!-- 右側:預覽與下載 -->
       <div class="w-full lg:w-1/2 lg:sticky lg:top-4 h-fit">
         <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-blue-100">
           <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">
@@ -245,9 +240,8 @@
   </div>
 
   <script>
-    // --- 全域變數 ---
-    let uploadedFont = null; // 儲存上傳的字型名稱
-    let borderLayers = []; // 儲存多層邊框的設定
+    let uploadedFont = null;
+    let borderLayers = [];
 
     // --- 字型上傳功能 ---
     document.getElementById('fontUpload').addEventListener('change', function(e) {
@@ -262,18 +256,16 @@
           newFont.load().then(function(loadedFont) {
             document.fonts.add(loadedFont);
             uploadedFont = fontName;
-            console.log(`字型 ${fontName} 上傳成功`);
             generateLogo();
           }).catch(function(error) {
             console.error('字型載入失敗:', error);
-            alert('字型載入失敗,請確認檔案格式是否正確');
           });
         };
         reader.readAsDataURL(file);
       }
     });
 
-    // --- 建議配色資料 ---
+    // --- 建議配色 ---
     const suggestedGradients = {
       "日出橙黃": ["#FF6B6B", "#FFD93D", "#6BCF7F"],
       "海洋藍綠": ["#667eea", "#764ba2", "#f093fb"],
@@ -285,13 +277,9 @@
       "金色輝煌": ["#f7971e", "#ffd200"],
       "薄荷綠": ["#00b09b", "#96c93d"],
       "櫻花粉": ["#fbc2eb", "#a6c1ee"],
-      "彩虹七色": ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"],
-      "晨曦漸層": ["#ffecd2", "#fcb69f"],
-      "極光綠": ["#00c6ff", "#0072ff"],
-      "糖果色": ["#FFA8B8", "#FFDC85", "#98E8C1", "#7EC8E3"]
+      "彩虹七色": ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
     };
 
-    // --- 初始化建議配色下拉選單 ---
     function initSuggestedGradients() {
       const select = document.getElementById('suggestedGradient');
       for (const [name, colors] of Object.entries(suggestedGradients)) {
@@ -302,61 +290,44 @@
       }
     }
 
-    // --- 套用建議配色 ---
     function applySuggestedGradient(name) {
       if (!name) return;
       const colors = suggestedGradients[name];
-      if (!colors) return;
-      
       document.getElementById('colorStopCount').value = colors.length;
       updateColorPickers();
-      
       const colorInputs = document.querySelectorAll('.colorInput');
       colorInputs.forEach((input, index) => {
-        if (index < colors.length) {
-          input.value = colors[index];
-        }
+        if (index < colors.length) input.value = colors[index];
       });
-      
       generateLogo();
     }
 
-    // --- 動態生成顏色選擇器 ---
     function updateColorPickers() {
       const count = parseInt(document.getElementById('colorStopCount').value);
       const container = document.getElementById('colorPickers');
       container.innerHTML = '';
-      
       const defaultColors = ["#FF6B6B", "#FFD93D", "#6BCF7F", "#667eea", "#f093fb", "#38ef7d", "#f5af19"];
-      
       for (let i = 0; i < count; i++) {
         const colorDiv = document.createElement('div');
         colorDiv.className = 'flex flex-col items-center';
-        
         const input = document.createElement('input');
         input.type = 'color';
         input.className = 'colorInput';
         input.value = defaultColors[i % defaultColors.length];
         input.oninput = generateLogo;
-        
         const label = document.createElement('label');
-        label.className = 'text-sm text-gray-600 mt-1';
-        label.textContent = `顏色 ${i + 1}`;
-        
+        label.className = 'text-xs text-gray-500 mt-1';
+        label.textContent = `色 ${i + 1}`;
         colorDiv.appendChild(input);
         colorDiv.appendChild(label);
         container.appendChild(colorDiv);
       }
     }
 
-    // --- 多層邊框功能 ---
-    function addBorderLayer() {
-      const layerId = Date.now(); // 用時間戳當 ID 避免重複
-      const layer = {
-        id: layerId,
-        width: 2,
-        color: '#000000'
-      };
+    // --- 邊框功能 ---
+    function addBorderLayer(color = '#000000', width = 2) {
+      const layerId = Date.now() + Math.random();
+      const layer = { id: layerId, width: width, color: color };
       borderLayers.push(layer);
       renderBorderLayers();
       generateLogo();
@@ -379,41 +350,21 @@
     function renderBorderLayers() {
       const container = document.getElementById('borderLayers');
       container.innerHTML = '';
-      
-      if (borderLayers.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-4">目前沒有邊框，點擊上方按鈕新增</p>';
-        return;
-      }
-      
       borderLayers.forEach((layer, index) => {
         const layerDiv = document.createElement('div');
         layerDiv.className = 'flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200';
-        
         layerDiv.innerHTML = `
-          <span class="text-sm font-bold text-purple-600 min-w-[50px]">第${index + 1}層</span>
-          <div class="flex flex-col items-center">
-            <label class="text-xs text-gray-600 mb-1">顏色</label>
-            <input type="color" value="${layer.color}" 
-                   onchange="updateBorderLayer(${layer.id}, 'color', this.value)"
-                   class="w-12 h-12 rounded cursor-pointer border-2 border-gray-300">
-          </div>
-          <div class="flex-1 min-w-[120px]">
-            <label class="text-xs text-gray-600 block mb-1">寬度 (px):</label>
-            <input type="number" min="1" max="50" value="${layer.width}" 
-                   oninput="updateBorderLayer(${layer.id}, 'width', this.value)"
-                   class="w-full p-2 text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none">
-          </div>
-          <button onclick="removeBorderLayer(${layer.id})" 
-                  class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition shrink-0">
-            🗑️
-          </button>
+          <span class="text-sm font-bold text-purple-600 min-w-[50px]">層級 ${index + 1}</span>
+          <input type="color" value="${layer.color}" onchange="updateBorderLayer(${layer.id}, 'color', this.value)" class="w-10 h-10 rounded cursor-pointer">
+          <input type="number" min="0" max="50" value="${layer.width}" oninput="updateBorderLayer(${layer.id}, 'width', this.value)" class="w-16 p-1 border-2 border-gray-300 rounded text-center">
+          <span class="text-xs text-gray-400">px</span>
+          <button onclick="removeBorderLayer(${layer.id})" class="ml-auto text-red-500">🗑️</button>
         `;
-        
         container.appendChild(layerDiv);
       });
     }
 
-    // --- 主要繪圖函式 (已改善漸層範圍) ---
+    // --- 核心繪圖邏輯 ---
     function generateLogo() {
       const canvas = document.getElementById('logoCanvas');
       const ctx = canvas.getContext('2d');
@@ -426,239 +377,124 @@
       const autoFitGradient = document.getElementById('autoFitGradient').checked;
       const colorInputs = document.querySelectorAll('.colorInput');
 
-      // 設置畫布大小自適應文字行數,避免被切掉
       const lines = text.split('\n');
       const lineHeight = fontSize * lineHeightMultiplier;
-      const minHeight = Math.max(400, (lines.length + 1) * lineHeight + 50); 
-      if (canvas.height !== minHeight) {
-          canvas.height = minHeight;
-      }
-      if (canvas.width !== 600) {
-        canvas.width = 600;
-      }
+      const totalTextHeight = lines.length * lineHeight;
+      
+      canvas.width = 600;
+      canvas.height = Math.max(400, totalTextHeight + 100);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = `bold ${fontSize}px ${uploadedFont ? `"${uploadedFont}"` : '"GenSenRounded", "Microsoft JhengHei", "Heiti TC", sans-serif'}`;
+      ctx.font = `bold ${fontSize}px ${uploadedFont ? `"${uploadedFont}"` : '"GenSenRounded", "Microsoft JhengHei", sans-serif'}`;
 
-      // 陰影設定
-      if (useShadow) {
-        ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-        ctx.shadowOffsetX = fontSize * 0.08;
-        ctx.shadowOffsetY = fontSize * 0.08;
-        ctx.shadowBlur = fontSize * 0.1;
-      } else {
-        ctx.shadowColor = "transparent";
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 0;
-      }
-
-      // === 改善重點：計算文字實際範圍 ===
-      let textBounds = {
-        minX: canvas.width,
-        maxX: 0,
-        minY: canvas.height,
-        maxY: 0
-      };
-      
-      if (autoFitGradient && text) {
-        // 計算所有文字行的邊界
-        const totalTextHeight = lines.length * lineHeight;
-        const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
-        
-        lines.forEach((line, index) => {
-          const y = startY + index * lineHeight;
-          const metrics = ctx.measureText(line);
-          const textWidth = metrics.width;
-          const textHeight = fontSize; // 近似高度
-          
-          const x = canvas.width / 2;
-          textBounds.minX = Math.min(textBounds.minX, x - textWidth / 2);
-          textBounds.maxX = Math.max(textBounds.maxX, x + textWidth / 2);
-          textBounds.minY = Math.min(textBounds.minY, y - textHeight / 2);
-          textBounds.maxY = Math.max(textBounds.maxY, y + textHeight / 2);
-        });
-      }
-
-      // 建立漸層
-      let gradient;
-      if (gradientType === 'linear') {
-        const radians = angle * Math.PI / 180;
-        
-        let x1, y1, x2, y2;
-        
-        if (autoFitGradient && text && textBounds.maxX > textBounds.minX) {
-          // 使用文字實際範圍
-          const centerX = (textBounds.minX + textBounds.maxX) / 2;
-          const centerY = (textBounds.minY + textBounds.maxY) / 2;
-          const width = textBounds.maxX - textBounds.minX;
-          const height = textBounds.maxY - textBounds.minY;
-          const diag = Math.sqrt(width * width + height * height);
-          
-          x1 = centerX - Math.cos(radians) * diag / 2;
-          y1 = centerY - Math.sin(radians) * diag / 2;
-          x2 = centerX + Math.cos(radians) * diag / 2;
-          y2 = centerY + Math.sin(radians) * diag / 2;
-        } else {
-          // 使用整個畫布
-          const diag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
-          const xCenter = canvas.width / 2;
-          const yCenter = canvas.height / 2;
-          
-          x1 = xCenter - Math.cos(radians) * diag / 2;
-          y1 = yCenter - Math.sin(radians) * diag / 2;
-          x2 = xCenter + Math.cos(radians) * diag / 2;
-          y2 = yCenter + Math.sin(radians) * diag / 2;
-        }
-        
-        gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-      } else {
-        // 放射狀漸層
-        let centerX, centerY, radius;
-        
-        if (autoFitGradient && text && textBounds.maxX > textBounds.minX) {
-          centerX = (textBounds.minX + textBounds.maxX) / 2;
-          centerY = (textBounds.minY + textBounds.maxY) / 2;
-          const width = textBounds.maxX - textBounds.minX;
-          const height = textBounds.maxY - textBounds.minY;
-          radius = Math.sqrt(width * width + height * height) / 2;
-        } else {
-          centerX = canvas.width / 2;
-          centerY = canvas.height / 2;
-          radius = Math.max(canvas.width, canvas.height) / 1.5;
-        }
-        
-        gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-      }
-
-      // 加入顏色停駐點
-      const colorCount = colorInputs.length;
-      if (colorCount > 0) {
-        colorInputs.forEach((input, index) => {
-          const stop = index / (colorCount - 1);
-          gradient.addColorStop(stop, input.value);
-        });
-      } else {
-        gradient.addColorStop(0, "black");
-        gradient.addColorStop(1, "white");
-      }
-
-      ctx.fillStyle = gradient;
-
-      // 繪製文字
-      const totalTextHeight = lines.length * lineHeight;
+      // 計算文字邊界用於漸層貼合
+      let textBounds = { minX: canvas.width, maxX: 0, minY: canvas.height, maxY: 0 };
       const startY = (canvas.height - totalTextHeight) / 2 + (lineHeight / 2);
-
-      // 先畫多層外框
-      for (let i = borderLayers.length - 1; i >= 0; i--) {
-        const layer = borderLayers[i];
-        ctx.lineWidth = layer.width * 2;
-        ctx.strokeStyle = layer.color;
-        ctx.lineJoin = 'round';
-        ctx.miterLimit = 2;
-        
-        lines.forEach((line, index) => {
-          const y = startY + index * lineHeight;
-          ctx.strokeText(line, canvas.width / 2, y);
-        });
-      }
-
-      // 再畫填色
+      
       lines.forEach((line, index) => {
         const y = startY + index * lineHeight;
-        ctx.fillText(line, canvas.width / 2, y);
+        const metrics = ctx.measureText(line);
+        const w = metrics.width;
+        textBounds.minX = Math.min(textBounds.minX, canvas.width/2 - w/2);
+        textBounds.maxX = Math.max(textBounds.maxX, canvas.width/2 + w/2);
+        textBounds.minY = Math.min(textBounds.minY, y - fontSize/2);
+        textBounds.maxY = Math.max(textBounds.maxY, y + fontSize/2);
+      });
+
+      // 漸層設定
+      let gradient;
+      if (gradientType === 'linear') {
+        const rad = angle * Math.PI / 180;
+        let x1, y1, x2, y2;
+        if (autoFitGradient) {
+          const cx = (textBounds.minX + textBounds.maxX) / 2;
+          const cy = (textBounds.minY + textBounds.maxY) / 2;
+          const diag = Math.sqrt(Math.pow(textBounds.maxX-textBounds.minX, 2) + Math.pow(textBounds.maxY-textBounds.minY, 2));
+          x1 = cx - Math.cos(rad) * diag / 2;
+          y1 = cy - Math.sin(rad) * diag / 2;
+          x2 = cx + Math.cos(rad) * diag / 2;
+          y2 = cy + Math.sin(rad) * diag / 2;
+        } else {
+          x1 = 0; y1 = 0; x2 = canvas.width; y2 = canvas.height;
+        }
+        gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      } else {
+        const cx = (textBounds.minX + textBounds.maxX) / 2;
+        const cy = (textBounds.minY + textBounds.maxY) / 2;
+        const r = Math.max(textBounds.maxX - textBounds.minX, textBounds.maxY - textBounds.minY) / 1.2;
+        gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r || 100);
+      }
+
+      colorInputs.forEach((input, i) => gradient.addColorStop(i/(colorInputs.length-1), input.value));
+      
+      // 繪製陰影 (僅對最後一層填色生效)
+      if (useShadow) {
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+      }
+
+      // 繪製多層邊框 (從最外層往內層畫)
+      // 注意：畫布繪製順序是後畫的蓋住先畫的。
+      // 所以如果要實現疊加感，寬度大的要先畫（在底層）。
+      const sortedBorders = [...borderLayers].sort((a, b) => b.width - a.width);
+      
+      sortedBorders.forEach(layer => {
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = layer.width * 2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        lines.forEach((line, index) => {
+          ctx.strokeText(line, canvas.width / 2, startY + index * lineHeight);
+        });
+      });
+
+      // 繪製文字填色
+      ctx.fillStyle = gradient;
+      lines.forEach((line, index) => {
+        ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
       });
     }
 
     function downloadPNG() {
       const canvas = document.getElementById('logoCanvas');
-      const ctx = canvas.getContext('2d');
+      const w = parseInt(document.getElementById('downloadWidth').value);
+      const h = parseInt(document.getElementById('downloadHeight').value);
       
-      const downloadWidth = parseInt(document.getElementById('downloadWidth').value) || 1200;
-      const downloadHeight = parseInt(document.getElementById('downloadHeight').value) || 800;
+      const off = document.createElement('canvas');
+      off.width = w; off.height = h;
+      const octx = off.getContext('2d');
+      octx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, w, h);
       
-      // 自動裁切邏輯
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      let top = null, bottom = null, left = null, right = null;
-
-      for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-          const index = (y * canvas.width + x) * 4;
-          if (data[index + 3] > 0) {
-            if (top === null) top = y;
-            bottom = y;
-            if (left === null || x < left) left = x;
-            if (right === null || x > right) right = x;
-          }
-        }
-      }
-
-      if (top !== null) {
-        const padding = 20;
-        const cropTop = Math.max(0, top - padding);
-        const cropLeft = Math.max(0, left - padding);
-        const cropBottom = Math.min(canvas.height - 1, bottom + padding);
-        const cropRight = Math.min(canvas.width - 1, right + padding);
-
-        const trimmedWidth = cropRight - cropLeft + 1;
-        const trimmedHeight = cropBottom - cropTop + 1;
-
-        const trimmedCanvas = document.createElement('canvas');
-        trimmedCanvas.width = trimmedWidth;
-        trimmedCanvas.height = trimmedHeight;
-        const trimmedCtx = trimmedCanvas.getContext('2d');
-        trimmedCtx.putImageData(ctx.getImageData(cropLeft, cropTop, trimmedWidth, trimmedHeight), 0, 0);
-
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = downloadWidth;
-        finalCanvas.height = downloadHeight;
-        const finalCtx = finalCanvas.getContext('2d');
-
-        const scale = Math.min(downloadWidth / trimmedWidth, downloadHeight / trimmedHeight);
-        const scaledWidth = trimmedWidth * scale;
-        const scaledHeight = trimmedHeight * scale;
-        const x = (downloadWidth - scaledWidth) / 2;
-        const y = (downloadHeight - scaledHeight) / 2;
-
-        finalCtx.drawImage(trimmedCanvas, x, y, scaledWidth, scaledHeight);
-
-        const link = document.createElement('a');
-        link.download = `gradi_text_${downloadWidth}x${downloadHeight}_${new Date().getTime()}.png`;
-        link.href = finalCanvas.toDataURL('image/png');
-        link.click();
-      } else {
-        const msg = document.createElement('div');
-        msg.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 text-white px-6 py-4 rounded-xl shadow-2xl text-xl z-50';
-        msg.innerText = "畫布是空的,請先輸入文字喔!";
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 2000);
-      }
+      const link = document.createElement('a');
+      link.download = `漸層文字_${Date.now()}.png`;
+      link.href = off.toDataURL('image/png');
+      link.click();
     }
 
-    // 初始化
+    // 初始化設定
     window.onload = function() {
-      addBorderLayer();
+      // 根據需求預設三層邊框
+      // 第一層（內）：黑色 1px
+      // 第二層（中）：白色 4px
+      // 第三層（外）：黑色 5px
+      // 注意：繪製時寬度大的要在最下面
+      addBorderLayer('#000000', 1);
+      addBorderLayer('#ffffff', 4);
+      addBorderLayer('#000000', 5);
+      
       initSuggestedGradients();
+      updateColorPickers();
       
       const font = new FontFace('GenSenRounded', 'url(GenSenRounded2TW-H.otf)');
-      font.load().then(function(loadedFont) {
-        document.fonts.add(loadedFont);
-        console.log('源泉圓體載入成功');
-        updateColorPickers();
+      font.load().then(f => {
+        document.fonts.add(f);
         generateLogo();
-      }).catch(function(error) {
-        console.error('字型載入失敗:', error);
-        updateColorPickers();
-        generateLogo();
-      });
+      }).catch(() => generateLogo());
     };
   </script>
 </body>
 </html>
-
-
-
-
