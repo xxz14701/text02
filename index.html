@@ -181,6 +181,11 @@
               <input type="range" id="lineHeight" value="1.3" min="0.8" max="3.0" step="0.1" oninput="document.getElementById('lineHeightValue').innerText=this.value; generateLogo()">
             </div>
 
+            <div>
+              <label class="block text-lg font-medium mb-2">字距大小:<span id="letterSpacingValue" class="text-blue-600 font-bold">0</span>px</label>
+              <input type="range" id="letterSpacing" value="0" min="-20" max="100" step="1" oninput="document.getElementById('letterSpacingValue').innerText=this.value; generateLogo()">
+            </div>
+
             <!-- 多層邊框設定 -->
             <div class="border-2 border-purple-200 rounded-xl p-4 bg-purple-50">
               <div class="flex justify-between items-center mb-3">
@@ -422,6 +427,7 @@
       const angle = parseInt(document.getElementById('gradientAngle').value);
       const useShadow = document.getElementById('toggleShadow').checked;
       const lineHeightMultiplier = parseFloat(document.getElementById('lineHeight').value);
+      const letterSpacing = parseInt(document.getElementById('letterSpacing').value);
       const gradientType = document.getElementById('gradientType').value;
       const autoFitGradient = document.getElementById('autoFitGradient').checked;
       const colorInputs = document.querySelectorAll('.colorInput');
@@ -441,6 +447,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = `bold ${fontSize}px ${uploadedFont ? `"${uploadedFont}"` : '"GenSenRounded", "Microsoft JhengHei", "Heiti TC", sans-serif'}`;
+      ctx.letterSpacing = letterSpacing + 'px';
 
       // 陰影設定
       if (useShadow) {
@@ -658,7 +665,3 @@
   </script>
 </body>
 </html>
-
-
-
-
